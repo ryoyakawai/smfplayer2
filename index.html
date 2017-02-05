@@ -26,6 +26,8 @@
      const smfReader=document.querySelector("#smfreader");
      const midiPlayback=document.querySelector("#midiplayback");
 
+     // set console.info not to print
+     console.info=function(){};
 
      document.querySelector("#button00").addEventListener("mousedown", () => {
          console.log(smfReader.getMidiSeqLists());
@@ -38,7 +40,7 @@
          console.log(midiPlayback, midi.getOutputDevice());
          var mididata=smfReader.getMidiSeqLists();
          midiPlayback.setMidiOut(midi.getOutputDevice());
-         midiPlayback.startPlay(mididata[0], 100);
+         midiPlayback.startPlay(mididata[0], 200);
          console.log("play");
      });
      document.querySelector("#stop").addEventListener("mousedown", () => {
