@@ -1,0 +1,54 @@
+<html>
+  <head></head>
+  <body>
+    <script src="bower_components/webcomponentsjs/webcomponents-lite.min.js"></script>
+    <link rel="import" href="bower_components/polymer/polymer.html">
+    <link rel="import" href="bower_components/x-webmidi/x-webmidirequestaccess.html">
+    <link rel="import" href="components/webmusic-smfreader.html">
+    <link rel="import" href="components/webmusic-midiplayback.html">
+
+    <x-webmidirequestaccess sysex output></x-webmidirequestaccess>
+    <webmusic-smfreader id="smfreader"></webmusic-smfreader>
+    <webmusic-midiplayback id="midiplayback"></webmusic-midiplayback>
+
+    <x-webmidioutput id="midioutput" autoreselect></x-webmidioutput>
+    <br><br>
+
+    <button id="button00">button00</button>
+    <br><br>
+
+
+    <button id="play">Play</button>
+    <button id="stop">Stop</button>
+
+    <script type="text/javascript">
+     const midi=document.querySelector("#midioutput");
+     const smfReader=document.querySelector("#smfreader");
+     const midiPlayback=document.querySelector("#midiplayback");
+
+
+     document.querySelector("#button00").addEventListener("mousedown", () => {
+         console.log(smfReader.getMidiSeqLists());
+     });
+     smfReader.addEventListener("raiseError", (msg) => {
+         console.log(msg.detail);
+     });
+
+     document.querySelector("#play").addEventListener("mousedown", () => {
+         console.log(midiPlayback, midi.getOutputDevice());
+         var mididata=smfReader.getMidiSeqLists();
+         midiPlayback.setMidiOut(midi.getOutputDevice());
+         midiPlayback.startPlay(mididata[0], 100);
+         console.log("play");
+     });
+     document.querySelector("#stop").addEventListener("mousedown", () => {
+         var eventNo=midiPlayback.stopPlay();
+         var mididata=smfReader.getMidiSeqLists();
+         mididata[0].eventNo=eventNo;
+         console.log("midiStop", eventNo);         
+     });
+
+    </script>
+
+  </body>
+</html>
