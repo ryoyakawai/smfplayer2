@@ -50,11 +50,15 @@
                this.midiPlayback.stopPlay();
                return {eventNo: this.midiPlayback.eventNo};
            },
+           isPlaying: function() {
+               return this.midiPlayback.nowPlaying;
+           },
            ready: function() {
                
                // beginning of MidiPlayer
                var MidiPlayback = function() {
                    this.nsx1Mode=false;
+                   this.nowPlaying=false;
                };
 
                MidiPlayback.prototype={
@@ -77,7 +81,6 @@
 	                     this.nextEventInfo;
 	                     this.samplesToNextEvent = 0;
                        this.finished=false;
-                       this.nowPlaying=false;
                        
                        this.eventTime=0;
                        this.startTime=0;

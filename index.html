@@ -69,22 +69,26 @@
          //console.log("[raiseEvent]", msg, option, msg.detail.data[msg.detail.idx].name);
      });
 
-     document.querySelector("#play").addEventListener("mousedown", () => {
-         var selIdx=document.querySelector("#fileList").value;
-         if(selIdx<0) {
-             console.error("Select one from the list.");
-             return;
+     document.querySelector("#play").addEventListener("mousedown", (evet) => {
+         if(midiPlayback.isPlaying()!==true) {
+             var selIdx=document.querySelector("#fileList").value;
+             if(selIdx<0) {
+                 console.error("Select one from the list.");
+                 return;
+             }
+             var mididata=smfReader.getMidiSeqLists();
+             midiPlayback.setMidiOut(midi.getOutputDevice());
+             midiPlayback.startPlay(mididata[selIdx], 200);
+             console.log("MIDI startPlay");
          }
-         var mididata=smfReader.getMidiSeqLists();
-         midiPlayback.setMidiOut(midi.getOutputDevice());
-         midiPlayback.startPlay(mididata[selIdx], 200);
-         console.log("play");
      });
-     document.querySelector("#stop").addEventListener("mousedown", () => {
-         var eventNo=midiPlayback.stopPlay();
-         var mididata=smfReader.getMidiSeqLists();
-         mididata[0].eventNo=eventNo;
-         console.log("midiStop", eventNo);         
+     document.querySelector("#stop").addEventListener("mousedown", (event) => {
+         if(midiPlayback.isPlaying()!==false) {
+             var eventNo=midiPlayback.stopPlay();
+             var mididata=smfReader.getMidiSeqLists();
+             mididata[0].eventNo=eventNo;
+             console.log("MIDI stopPlay", eventNo);         
+         }
      });
 
     </script>
