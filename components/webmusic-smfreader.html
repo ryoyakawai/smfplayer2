@@ -21,8 +21,12 @@
        height: 100px;
        border: 2px dashed #bbbbbb;
      }
+     .unvisible {
+       visibility: hidden;
+       display: none;
+     }
     </style>
-    <div id="filedrop" class="filedrop"></div>
+    <div id="filedrop" class="filedrop unvisible"></div>
   </template>
   <script>
   Polymer((function(){
@@ -30,50 +34,71 @@
        return {
            is: "webmusic-smfreader",
            properties: {
-               seqLists: {
-                   type: Array,
-                   value: []
+               dispdroparea: {
+                   type: Boolean,
+                   value: false
                }
            },
-           raiseError: function(type, msg) {
+           raiseMessage: function(mode, type, detail) {
                // info, warning, error 
-               this.fire("raiseError", {type:type, msg:msg});
-               console.info(msg);
+               var eventName=null;
+               switch(mode) {
+                    case "error":   
+                       eventName="raiseError"
+                       break;
+                   case "event":
+                       eventName="raiseEvent"
+                       break;
+               } 
+               this.fire(eventName, {type:type, detail:detail});
+               console.info(detail);
+           },
+           fileOnDrop: function(event) {
+               const file = event.dataTransfer.files[0];
+               const reader = new FileReader();
+               var self=this;
+               reader.onload = (event) => {
+                   var count=0;
+                   for(var i=0; i<self.seqLists.length; i++) {
+                       if(self.seqLists[i].name==file.name) {
+                           self.raiseMessage("error", "info", '"'+file.name + '" has read before.');
+                           count+=1;
+                           break;
+                       }
+                   }
+                   if(count==0) {
+                       self.seqLists.push({"name":file.name, "size":~~(file.size/1000), "data": this.smfParser.parse(event.target.result), "eventNo": 0});
+                       self.raiseMessage("event", "seqAdded", {idx:self.seqLists.length-1, data:self.seqLists});
+                   }
+               }
+               reader.readAsBinaryString(file);
+           },
+           dropareaRelease: function(event){
+               event.preventDefault();
+               event.target.style.removeProperty("background");
+               event.target.style.removeProperty("border-color");
+           },
+           onDragover: function(event) {
+               event.preventDefault();
+               event.target.style.setProperty("background", "#dddddd");
+               event.target.style.setProperty("border-color", "#666666");
            },
            ready: function() {
-               const droparea=document.querySelector("#filedrop");
-               const dropareaRelease = (event) => {
-                   event.preventDefault();
-                   event.target.style.removeProperty("background");
-                   event.target.style.removeProperty("border-color");
-               };
-               droparea.ondragover = (event) => {
-                   event.preventDefault();
-                   event.target.style.setProperty("background", "#dddddd");
-                   event.target.style.setProperty("border-color", "#666666");
-               };
-               droparea.ondragend = droparea.ondragleave = (event) => {
-                   dropareaRelease(event);
-               };
+               if(this.dispdroparea===true) {
+                   this.$["filedrop"].className = 
+                       this.$["filedrop"].className.replace("unvisible", "");
+               }
+
+               this.seqLists=[];
+               const droparea=this.$["filedrop"];
+               droparea.ondragover = this.onDragover.bind(this);
+               droparea.ondragend = droparea.ondragleave =  this.dropareaRelease.bind(this);
                droparea.ondrop = (event) => {
-                   dropareaRelease(event);
-                   const file = event.dataTransfer.files[0];
-                   const reader = new FileReader();
-                   var self=this;
-                   reader.onload = (event) => {
-                       var count=0;
-                       for(var i=0; i<self.seqLists.length; i++) {
-                           if(self.seqLists[i].name==file.name) {
-                               self.raiseError("info", '"'+file.name + '" has read before.');
-                               count+=1;
-                               break;
-                           }
-                       }
-                       if(count==0) self.seqLists.push({"name":file.name, "size":~~(file.size/1000), "data": this.smfParser.parse(event.target.result), "eventNo": 0});
-                   }
-                   reader.readAsBinaryString(file);
                    event.preventDefault();
-               };
+                   console.log(this);
+                   this.dropareaRelease(event);
+                   this.fileOnDrop(event);
+               }
 
                // smfparser
                function SmfParser() {
@@ -305,7 +330,7 @@
 						                           event.microsecondsPerBeat = (
 							                             (d1 << 16) + (d2 << 8) + d3
 						                           );
-                                       console.log("[setTempo:]", event.microsecondsPerBeat);
+                                       //console.info("[setTempo] ", event.microsecondsPerBeat);
 						                           event.raw = [ 0x2f, d1, d2, d3 ];
 						                           return event;
 					                         case 0x54:

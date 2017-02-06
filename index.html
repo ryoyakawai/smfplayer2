@@ -1,5 +1,18 @@
 <html>
-  <head></head>
+  <head>
+    <style>
+     body {
+       font-family: arial;
+       margin:20px;
+     }
+     #fileList {
+       width:230px;
+       border:1px solid #dddddd;
+       border-radius:3px;
+       padding:3px
+     }
+    </style>
+ </head>
   <body>
     <script src="bower_components/webcomponentsjs/webcomponents-lite.min.js"></script>
     <link rel="import" href="bower_components/polymer/polymer.html">
@@ -11,10 +24,12 @@
     <webmusic-smfreader id="smfreader"></webmusic-smfreader>
     <webmusic-midiplayback id="midiplayback"></webmusic-midiplayback>
 
-    <x-webmidioutput id="midioutput" autoreselect></x-webmidioutput>
+    MIDI Output: <x-webmidioutput id="midioutput" autoreselect></x-webmidioutput>
     <br><br>
 
-    <button id="button00">button00</button>
+    <select id="fileList" size="4">
+      <option value="" disabled selected>Drop MIDI File Here</option>
+    </select>
     <br><br>
 
 
@@ -29,18 +44,40 @@
      // set console.info not to print
      console.info=function(){};
 
-     document.querySelector("#button00").addEventListener("mousedown", () => {
-         console.log(smfReader.getMidiSeqLists());
+     var droparea=document.querySelector("#fileList");
+     droparea.ondragover = smfReader.onDragover;
+     droparea.ondragend = droparea.ondragleave = smfReader.dropareaRelease;
+     droparea.ondrop = (event) => {
+         event.preventDefault();
+         smfReader.dropareaRelease(event);
+         smfReader.fileOnDrop(event);
+     }
+     smfReader.addEventListener("raiseError", (event) => {
+         console.log("[raiseError]", event.detail);
      });
-     smfReader.addEventListener("raiseError", (msg) => {
-         console.log(msg.detail);
+     smfReader.addEventListener("raiseEvent", (event) => {
+         var msg=event.detail;
+         switch(msg.type) {
+             case "seqAdded":
+                 var option = document.createElement("option");
+                 option.value=msg.detail.idx;
+                 option.text=msg.detail.data[msg.detail.idx].name;
+                 option.selected=true;
+                 document.querySelector("#fileList").appendChild(option);
+                 break;
+         }
+         //console.log("[raiseEvent]", msg, option, msg.detail.data[msg.detail.idx].name);
      });
 
      document.querySelector("#play").addEventListener("mousedown", () => {
-         console.log(midiPlayback, midi.getOutputDevice());
+         var selIdx=document.querySelector("#fileList").value;
+         if(selIdx<0) {
+             console.error("Select one from the list.");
+             return;
+         }
          var mididata=smfReader.getMidiSeqLists();
          midiPlayback.setMidiOut(midi.getOutputDevice());
-         midiPlayback.startPlay(mididata[0], 200);
+         midiPlayback.startPlay(mididata[selIdx], 200);
          console.log("play");
      });
      document.querySelector("#stop").addEventListener("mousedown", () => {

@@ -16,7 +16,7 @@
 <dom-module id="webmusic-midiplayback">
   <template>
     <style>
-    <!-- CSS Here -->
+     /* CSS Here */
     </style>
     <!-- HTML Here -->
   </template>
@@ -323,7 +323,7 @@
                    setStartTime: function () {
                        this.startTime=window.performance.now();
                        this.eventTime=0;
-                       console.log("[setStartTime]", this.startTime);
+                       console.info("[setStartTime]", this.startTime);
                    },
 
                    allSoundOff: function () {
@@ -341,7 +341,7 @@
                    },
                    
                    setGM: function () {
-                       console.log("[Set GM]");
+                       console.info("[Set GM]");
                        this._sendToDevice([0xf0, 0x7e, 0x7f, 0x09, 0x01, 0xf7], 0); // GM System ON
                    }
                }
