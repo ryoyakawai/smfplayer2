@@ -1,0 +1,212 @@
+<html>
+  <head>
+    <style>
+     .card-wide.mdl-card {
+       width: 640px;
+     }
+     .card-contents {
+       margin:20px auto;
+     }
+     .unvisible {
+       visibility: hidden;
+       display: none;
+     }
+     .filelist-div {
+       margin:0px 40px;
+       padding:10px;
+       font-size:0.8em;
+       color:#999999;
+       margin:10px;
+     }
+     .filename {
+       width:380px;
+       margin-left:5px;
+       display: inline-block;
+     }
+     .filesize {
+       width:200px;
+       margin-left:5px;
+       display: inline-block;
+     }
+     .bottomline {
+       border-bottom:solid 1px #eeeeee;
+       padding-bottom:0px;
+     }
+     .playListItem {
+       font-size:1.0em;
+       color:#333333;
+       margin:0px 0px 0px 0px;
+       padding-top:10px;
+     }
+    </style>
+    <!-- Material Design Lite -->
+    <script src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+    <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
+    <!-- Material Design icon font -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+  </head>
+  <body>
+    <script src="bower_components/webcomponentsjs/webcomponents-lite.min.js"></script>
+    <link rel="import" href="bower_components/polymer/polymer.html">
+    <link rel="import" href="bower_components/x-webmidi/x-webmidirequestaccess.html">
+    <link rel="import" href="components/webmusic-smfreader.html">
+    <link rel="import" href="components/webmusic-midiplayback.html">
+
+    <x-webmidirequestaccess sysex output></x-webmidirequestaccess>
+    <webmusic-smfreader id="smfreader"></webmusic-smfreader>
+    <webmusic-midiplayback id="midiplayback"></webmusic-midiplayback>
+
+    <div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+      <header class="mdl-layout__header">
+        <div class="mdl-layout__header-row">
+          <span class="mdl-layout-title">Standard MIDI File Player 2</span>
+        </div>
+      </header>
+
+      <main class="mdl-layout__content">
+        <div class="page-content">
+
+
+
+
+          <div id="droparea" class="card-wide mdl-card mdl-shadow--2dp card-contents">
+            <div class="mdl-card__supporting-text">
+              <div>Drop Standard MIDI File Here.</div>
+              MIDI Output: <x-webmidioutput id="midioutput" autoreselect></x-webmidioutput><br>
+              <button id="play">Play</button>
+              <button id="stop">Stop</button>
+            </div>
+            <div class="mdl-card__actions mdl-card--border"></div>
+            <div id="divFileList" class="filelist-div unvisible">
+              <div class="bottomline">
+                <div class="filename ">File Name</div>
+                <div class="filesize">Size</div>
+              </div>
+            </div>
+
+          </div>
+
+
+          
+
+        </div>
+      </main>
+    </div>
+
+
+    <script type="text/javascript">
+     var AppConst = function() {
+         this.listSelectedIdx=null;
+     };
+
+     const appConst=new AppConst();
+     const midi=document.querySelector("#midioutput");
+     const smfReader=document.querySelector("#smfreader");
+     const midiPlayback=document.querySelector("#midiplayback");
+
+     // set console.info not to print
+     console.info=function(){};
+
+     var droparea=document.querySelector("#droparea");
+     droparea.ondragover = smfReader.onDragover;
+     droparea.ondragend = droparea.ondragleave = smfReader.dropareaRelease;
+     droparea.ondrop = (event) => {
+         event.preventDefault();
+         smfReader.dropareaRelease(event);
+         smfReader.fileOnDrop(event);
+     }
+     smfReader.addEventListener("raiseError", (event) => {
+         console.log("[raiseError]", event.detail);
+     });
+     smfReader.addEventListener("raiseEvent", (event) => {
+         var msg=event.detail;
+         switch(msg.type) {
+             case "seqAdded":
+                 if(document.querySelector("#divFileList").className.match("unvisible")!=null) {
+                     document.querySelector("#divFileList").className =
+                         document.querySelector("#divFileList").className.replace("unvisible", "");
+                 }
+                 
+                 var div01 = document.createElement("div");
+                 div01.id="child-"+msg.detail.idx;
+                 div01.innerHTML=msg.detail.data[msg.detail.idx].name;
+                 div01.name=msg.detail.idx;
+                 div01.className="fileName";
+                 var div02 = document.createElement("div");
+                 div02.id="child-"+msg.detail.idx;
+                 div02.innerHTML=msg.detail.data[msg.detail.idx].size + " kb";
+                 div02.className="filesize";
+                 var div00 = document.createElement("div");                 
+                 div00.id="parent-"+msg.detail.idx;
+                 div00.className="playlistItem bottomline";
+                 div00.appendChild(div01); div00.appendChild(div02);
+
+                 div00.addEventListener("mouseover", playListItemMouseOver);
+                 div00.addEventListener("mouseout", playListItemMouseOut);
+                 div00.addEventListener("mousedown", playListItemMouseDown);
+
+                 document.querySelector("#divFileList").appendChild(div00);
+                 break;
+         }
+         //console.log("[raiseEvent]", msg, option, msg.detail.data[msg.detail.idx].name);
+     });
+
+     document.querySelector("#play").addEventListener("mousedown", (evet) => {
+         if(midiPlayback.isPlaying()!==true) {
+             var selIdx=appConst.listSelectedIdx;
+             if(selIdx<0 || selIdx===null) {
+                 console.error("Select one from the list.");
+                 return;
+             }
+             var mididata=smfReader.getMidiSeqLists();
+             midiPlayback.setMidiOut(midi.getOutputDevice());
+             midiPlayback.startPlay(mididata[selIdx], 200);
+             console.log("MIDI startPlay");
+         }
+     });
+     document.querySelector("#stop").addEventListener("mousedown", (event) => {
+         if(midiPlayback.isPlaying()!==false) {
+             var eventNo=midiPlayback.stopPlay();
+             var mididata=smfReader.getMidiSeqLists();
+             mididata[0].eventNo=eventNo;
+             console.log("MIDI stopPlay", eventNo);         
+         }
+     });
+
+     
+     // (begin) behavior of item is selected
+     const playListItemMouseOver = (event) => {
+         target=checkIsParent(event);
+         target.style.setProperty("background-color", "#dfdfdf");
+     }
+     const playListItemMouseOut = (event) => {
+         target=checkIsParent(event);
+         if(appConst.listSelectedIdx!=target.id.split("-").pop()) {
+             target.style.removeProperty("background-color");
+         }
+     }
+     const playListItemMouseDown = (event) => {
+         target=checkIsParent(event);
+         newSelectedIdx=event.target.id.split("-").pop();
+         if(appConst.listSelectedIdx!==null
+            && newSelectedIdx!=appConst.listSelectedIdx) {
+             var e={target:{id:null}};
+             document.querySelector("#parent-" + appConst.listSelectedIdx).style.removeProperty("background-color");
+             
+         }
+         target.style.setProperty("background-color", "#dddddd");
+         appConst.listSelectedIdx=newSelectedIdx;
+     }
+     const checkIsParent = (event) => {
+         var target=event.target;
+         if(target.id.match("child")!==null) {
+             target=event.target.parentNode;
+         }
+         return target;
+     }
+     // (end) behavior of item is selected
+
+    </script>
+
+  </body>
+</html>
