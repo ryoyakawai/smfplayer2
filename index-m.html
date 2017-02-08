@@ -14,19 +14,46 @@
      .filelist-div {
        margin:0px 40px;
        padding:10px;
-       font-size:0.8em;
        color:#999999;
        margin:10px;
      }
-     .filename {
-       width:380px;
-       margin-left:5px;
+     .headerline {
+       font-size:0.8em;
+     }
+     .itemline {
+       font-size:0.9em;
+       line-height: 40px;
+       vertical-align: middle;
+     }
+     .fileicon {
        display: inline-block;
+       width:31px;
+       user-select: none;
+     }
+     .fileiconplay {
+       margin-left:5px;
+       animation-duration: 2s;
+       animation-iteration-count: infinite;
+     }
+     @keyframes kf_fileiconplaying {
+       0%   {color: #FFCCBC; /* #cccccc */}
+       50%  {color: #FF7043; /* #777777 */}
+       100% {color: #FFCCBC;}
+     }
+    .fileiconnoplay {
+       color:#cccccc;
+     }
+     .filename {
+       display: inline-block;
+       width:375px;
+       margin-left:5px;
+       user-select: none;
      }
      .filesize {
-       width:200px;
-       margin-left:5px;
        display: inline-block;
+       width:165px;
+       margin-left:5px;
+       user-select: none;
      }
      .bottomline {
        border-bottom:solid 1px #eeeeee;
@@ -36,7 +63,8 @@
        font-size:1.0em;
        color:#333333;
        margin:0px 0px 0px 0px;
-       padding-top:10px;
+       padding-top:5px;
+       transition: 100ms;
      }
     </style>
     <!-- Material Design Lite -->
@@ -79,8 +107,9 @@
             <div class="mdl-card__actions mdl-card--border"></div>
             <div id="divFileList" class="filelist-div unvisible">
               <div class="bottomline">
-                <div class="filename ">File Name</div>
-                <div class="filesize">Size</div>
+                <div class="fileicon"></div>
+                <div class="filename headerline">File Name</div>
+                <div class="filesize headerline">Size</div>
               </div>
             </div>
 
@@ -93,8 +122,15 @@
       </main>
     </div>
 
+    <div id="message-snackbar" class="mdl-js-snackbar mdl-snackbar">
+      <div class="mdl-snackbar__text"></div>
+      <button class="mdl-snackbar__action" type="button"></button>
+    </div>
+
 
     <script type="text/javascript">
+     'use strict';
+
      var AppConst = function() {
          this.listSelectedIdx=null;
      };
@@ -128,18 +164,21 @@
                  }
                  
                  var div01 = document.createElement("div");
-                 div01.id="child-"+msg.detail.idx;
-                 div01.innerHTML=msg.detail.data[msg.detail.idx].name;
-                 div01.name=msg.detail.idx;
-                 div01.className="fileName";
+                 div01.className="fileicon itemline fileiconnoplay";
+                 div01.innerHTML='<i id="fileicon-'+msg.detail.idx+'" class="material-icons fileiconplay">music_note</i>';
                  var div02 = document.createElement("div");
                  div02.id="child-"+msg.detail.idx;
-                 div02.innerHTML=msg.detail.data[msg.detail.idx].size + " kb";
-                 div02.className="filesize";
-                 var div00 = document.createElement("div");                 
+                 div02.innerHTML=msg.detail.data[msg.detail.idx].name;
+                 div02.name=msg.detail.idx;
+                 div02.className="fileName itemline";
+                 var div03 = document.createElement("div");
+                 div03.id="child-"+msg.detail.idx;
+                 div03.innerHTML=" "+msg.detail.data[msg.detail.idx].size + " kb";
+                 div03.className="filesize itemline";
+                 var div00 = document.createElement("div");
                  div00.id="parent-"+msg.detail.idx;
                  div00.className="playlistItem bottomline";
-                 div00.appendChild(div01); div00.appendChild(div02);
+                 div00.appendChild(div01); div00.appendChild(div02); div00.appendChild(div03);
 
                  div00.addEventListener("mouseover", playListItemMouseOver);
                  div00.addEventListener("mouseout", playListItemMouseOut);
@@ -157,45 +196,65 @@
              if(selIdx<0 || selIdx===null) {
                  console.error("Select one from the list.");
                  return;
+             } else {
+                 var mididata=smfReader.getMidiSeqLists();
+                 midiPlayback.setMidiOut(midi.getOutputDevice());
+                 midiPlayback.startPlay(mididata[selIdx], 200);
+                 document.querySelector("#fileicon-"+selIdx).style.setProperty("animation-name", "kf_fileiconplaying");
+                 console.log("MIDI startPlay");
              }
-             var mididata=smfReader.getMidiSeqLists();
-             midiPlayback.setMidiOut(midi.getOutputDevice());
-             midiPlayback.startPlay(mididata[selIdx], 200);
-             console.log("MIDI startPlay");
          }
      });
      document.querySelector("#stop").addEventListener("mousedown", (event) => {
          if(midiPlayback.isPlaying()!==false) {
-             var eventNo=midiPlayback.stopPlay();
-             var mididata=smfReader.getMidiSeqLists();
-             mididata[0].eventNo=eventNo;
-             console.log("MIDI stopPlay", eventNo);         
+             var selIdx=appConst.listSelectedIdx;
+             console.log(selIdx);
+             if(selIdx<0 || selIdx===null) {
+                 console.error("Select one from the list.");
+                 return;
+             } else {
+                 var eventNo=midiPlayback.stopPlay();
+                 var mididata=smfReader.getMidiSeqLists();
+                 mididata[0].eventNo=eventNo;
+                 document.querySelector("#fileicon-"+selIdx).style.removeProperty("animation-name");
+                 console.log("MIDI stopPlay", eventNo);         
+             }
          }
      });
 
      
      // (begin) behavior of item is selected
      const playListItemMouseOver = (event) => {
-         target=checkIsParent(event);
-         target.style.setProperty("background-color", "#dfdfdf");
+         var target=checkIsParent(event);
+         if(appConst.listSelectedIdx!=target.id.split("-").pop()) {
+             target.style.setProperty("background-color", "#eeeeee");
+         }
+         target.style.setProperty("cursor", "pointer");
      }
      const playListItemMouseOut = (event) => {
-         target=checkIsParent(event);
+         var target=checkIsParent(event);
          if(appConst.listSelectedIdx!=target.id.split("-").pop()) {
              target.style.removeProperty("background-color");
+             target.style.removeProperty("cursor");
          }
      }
      const playListItemMouseDown = (event) => {
-         target=checkIsParent(event);
-         newSelectedIdx=event.target.id.split("-").pop();
-         if(appConst.listSelectedIdx!==null
-            && newSelectedIdx!=appConst.listSelectedIdx) {
-             var e={target:{id:null}};
-             document.querySelector("#parent-" + appConst.listSelectedIdx).style.removeProperty("background-color");
-             
+         var target=checkIsParent(event);
+         //var newSelectedIdx=event.target.id.split("-").pop();
+         var newSelectedIdx=target.id.split("-").pop();
+         if(midiPlayback.isPlaying()!==true) {
+             if(appConst.listSelectedIdx!==null
+                && newSelectedIdx!=appConst.listSelectedIdx) {
+                 var e={target:{id:null}};
+                 document.querySelector("#parent-" + appConst.listSelectedIdx).style.removeProperty("background-color");
+             }
+             target.style.setProperty("background-color", "#f5f5f5");
+             appConst.listSelectedIdx=newSelectedIdx;
+         } else {
+             if(newSelectedIdx!=appConst.listSelectedIdx) {
+                 showSnackBar("Stop playback before select another song.");
+             }
          }
-         target.style.setProperty("background-color", "#dddddd");
-         appConst.listSelectedIdx=newSelectedIdx;
      }
      const checkIsParent = (event) => {
          var target=event.target;
@@ -205,6 +264,12 @@
          return target;
      }
      // (end) behavior of item is selected
+
+     const showSnackBar = (msg) => {
+         var snackbarContainer = document.querySelector('#message-snackbar');
+         var data = {message: msg};
+         snackbarContainer.MaterialSnackbar.showSnackbar(data);   
+     }
 
     </script>
 
