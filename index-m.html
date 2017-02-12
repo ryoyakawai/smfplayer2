@@ -165,11 +165,9 @@
      AppConst.prototype = {
          setListSelectedIdx: function(idx) {
              this.listSelectedIdx=idx;
-             console.log("[idx] ", idx);
          },
          setListSelectedIdxNull: function() {
              this.listSelectedIdx=null;
-             console.log("[null] ", this);
          }
      };
 
@@ -261,14 +259,13 @@
      document.querySelector("#stop").addEventListener("mousedown", (event) => {
          if(midiPlayback.isPlaying()!==false) {
              var selIdx=appConst.listSelectedIdx;
-             console.log(selIdx);
              if(selIdx<0 || selIdx===null) {
                  console.error("Select one from the list.");
                  return;
              } else {
                  var eventNo=midiPlayback.stopPlay();
                  var mididata=smfReader.getMidiSeqList();
-                 mididata[0].eventNo=eventNo;
+                 mididata[selIdx].eventNo=eventNo;
                  document.querySelector("#fileicon-"+selIdx).style.removeProperty("animation-name");
                  console.log("MIDI stopPlay", eventNo);         
              }
