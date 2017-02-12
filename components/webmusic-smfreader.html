@@ -60,7 +60,7 @@
                reader.onload = (event) => {
                    var count=0;
                    for(var i=0; i<self.seqLists.length; i++) {
-                       if(self.seqLists[i].name==file.name) {
+                       if(self.seqLists[i]!=null && self.seqLists[i].name==file.name) {
                            self.raiseMessage("error", "info", '"'+file.name + '" has read before.');
                            count+=1;
                            break;
@@ -478,8 +478,19 @@
                this.smfParser = new SmfParser();
                
            }, // end of ready:
-           getMidiSeqLists: function() {
+           getMidiSeqList: function() {
                return this.seqLists;
+           },
+           removeItemfromList: function(idx) {
+               //this.seqLists.splice(idx, 1);
+               this.seqLists[idx]=null;
+               var idx=[];
+               for(var i=0; i<this.seqLists.length; i++) {
+                   if(this.seqLists[i]!=null) {
+                       idx.push(i);
+                   }
+               }
+               return idx;
            }
        };
    })());

@@ -40,11 +40,15 @@
            },
            startPlay: function(midiseq, latency) {
                if(latency==null) latency=100;
-               this.midiPlayback.setStartTime();
-               this.midiPlayback.setChInfo(this.chInfo);
-               this.midiPlayback.changeFinished(false);
-               this.midiPlayback.init(midiseq.data, latency, midiseq.eventNo);
-               this.midiPlayback.startPlay();
+               if(midiseq===null) {
+                   return false;
+               } else {
+                   this.midiPlayback.setStartTime();
+                   this.midiPlayback.setChInfo(this.chInfo);
+                   this.midiPlayback.changeFinished(false);
+                   this.midiPlayback.init(midiseq.data, latency, midiseq.eventNo);
+                   this.midiPlayback.startPlay();
+               } 
            },
            stopPlay: function() {
                this.midiPlayback.stopPlay();

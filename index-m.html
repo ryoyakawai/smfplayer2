@@ -40,20 +40,51 @@
        50%  {color: #FF7043; /* #777777 */}
        100% {color: #FFCCBC;}
      }
-    .fileiconnoplay {
+     .material-icons-color-00 {
+       transition:100ms;
        color:#cccccc;
+     }
+     .material-icons-size-00 {
+       font-size:0.8em;
+     }
+     .fileicon-h {
+       display: inline-block;
+       width:26px;
+       user-select: none;
+     }
+     .filename-h {
+       display: inline-block;
+       width:375px;
+       user-select: none;
+     }
+     .filesize-h {
+       display: inline-block;
+       width:80px;
+       margin-left:5px;
+       user-select: none;
+     }
+     .controlitems-h {
+       display: inline-block;
+       width:75px;
+       margin-left:0px;
+       text-align:center;
      }
      .filename {
        display: inline-block;
        width:375px;
-       margin-left:5px;
        user-select: none;
      }
      .filesize {
        display: inline-block;
-       width:165px;
+       width:90px;
        margin-left:5px;
        user-select: none;
+     }
+     .controlitems {
+       display: inline-block;
+       width:75px;
+       margin-left:0px;
+       text-align:center;
      }
      .bottomline {
        border-bottom:solid 1px #eeeeee;
@@ -62,7 +93,7 @@
      .playListItem {
        font-size:1.0em;
        color:#333333;
-       margin:0px 0px 0px 0px;
+       margin:0px 0px;
        padding-top:5px;
        transition: 100ms;
      }
@@ -95,8 +126,6 @@
         <div class="page-content">
 
 
-
-
           <div id="droparea" class="card-wide mdl-card mdl-shadow--2dp card-contents">
             <div class="mdl-card__supporting-text">
               <div>Drop Standard MIDI File Here.</div>
@@ -107,13 +136,12 @@
             <div class="mdl-card__actions mdl-card--border"></div>
             <div id="divFileList" class="filelist-div unvisible">
               <div class="bottomline">
-                <div class="fileicon"></div>
-                <div class="filename headerline">File Name</div>
-                <div class="filesize headerline">Size</div>
+                <div class="fileicon-h itemline fileiconnoplay"><i class="material-icons">view_headline</i></div>
+                <div class="filename-h headerline">File Name</div>
+                <div class="filesize-h headerline">Size</div>
+                <div class="controlitems-h headerline"><i class="material-icons material-icons-color-00 material-icons-size-00" style="font-size:1em;">build</i></div>
               </div>
             </div>
-
-          </div>
 
 
           
@@ -134,8 +162,18 @@
      var AppConst = function() {
          this.listSelectedIdx=null;
      };
+     AppConst.prototype = {
+         setListSelectedIdx: function(idx) {
+             this.listSelectedIdx=idx;
+             console.log("[idx] ", idx);
+         },
+         setListSelectedIdxNull: function() {
+             this.listSelectedIdx=null;
+             console.log("[null] ", this);
+         }
+     };
 
-     const appConst=new AppConst();
+     var appConst=new AppConst();
      const midi=document.querySelector("#midioutput");
      const smfReader=document.querySelector("#smfreader");
      const midiPlayback=document.querySelector("#midiplayback");
@@ -160,12 +198,12 @@
              case "seqAdded":
                  if(document.querySelector("#divFileList").className.match("unvisible")!=null) {
                      document.querySelector("#divFileList").className =
-                         document.querySelector("#divFileList").className.replace("unvisible", "");
+                         (document.querySelector("#divFileList").className.replace("unvisible", "")).trim();
                  }
                  
                  var div01 = document.createElement("div");
                  div01.className="fileicon itemline fileiconnoplay";
-                 div01.innerHTML='<i id="fileicon-'+msg.detail.idx+'" class="material-icons fileiconplay">music_note</i>';
+                 div01.innerHTML='<i id="fileicon-'+msg.detail.idx+'" class="material-icons material-icons-color-00 material-icons-size-00">music_note</i>';
                  var div02 = document.createElement("div");
                  div02.id="child-"+msg.detail.idx;
                  div02.innerHTML=msg.detail.data[msg.detail.idx].name;
@@ -175,14 +213,27 @@
                  div03.id="child-"+msg.detail.idx;
                  div03.innerHTML=" "+msg.detail.data[msg.detail.idx].size + " kb";
                  div03.className="filesize itemline";
+                 var div04 = document.createElement("div");
+                 var removeIcon = document.createElement("i");
+                 removeIcon.id="remove-"+msg.detail.idx;
+                 removeIcon.innerHTML="highlight_off";
+                 removeIcon.className="material-icons material-icons-color-00";
+                 div04.appendChild(removeIcon);
+                 div04.id="child-"+msg.detail.idx;
+                 div04.className="controlitems itemline";
                  var div00 = document.createElement("div");
                  div00.id="parent-"+msg.detail.idx;
                  div00.className="playlistItem bottomline";
-                 div00.appendChild(div01); div00.appendChild(div02); div00.appendChild(div03);
+                 div00.appendChild(div01); div00.appendChild(div02); 
+                 div00.appendChild(div03); div00.appendChild(div04);
 
                  div00.addEventListener("mouseover", playListItemMouseOver);
                  div00.addEventListener("mouseout", playListItemMouseOut);
                  div00.addEventListener("mousedown", playListItemMouseDown);
+
+                 removeIcon.addEventListener("mouseover", controlIconMouseOver);
+                 removeIcon.addEventListener("mouseout", controlIconMouseOut);
+                 removeIcon.addEventListener("mousedown", controlIconMouseDown);
 
                  document.querySelector("#divFileList").appendChild(div00);
                  break;
@@ -193,15 +244,17 @@
      document.querySelector("#play").addEventListener("mousedown", (evet) => {
          if(midiPlayback.isPlaying()!==true) {
              var selIdx=appConst.listSelectedIdx;
+             console.log(selIdx);
              if(selIdx<0 || selIdx===null) {
                  console.error("Select one from the list.");
                  return;
              } else {
-                 var mididata=smfReader.getMidiSeqLists();
+                 var mididata=smfReader.getMidiSeqList();
                  midiPlayback.setMidiOut(midi.getOutputDevice());
-                 midiPlayback.startPlay(mididata[selIdx], 200);
-                 document.querySelector("#fileicon-"+selIdx).style.setProperty("animation-name", "kf_fileiconplaying");
-                 console.log("MIDI startPlay");
+                 if(midiPlayback.startPlay(mididata[selIdx], 200)!==false) {
+                     document.querySelector("#fileicon-"+selIdx).style.setProperty("animation-name", "kf_fileiconplaying");
+                     console.log("MIDI startPlay");
+                 }
              }
          }
      });
@@ -214,7 +267,7 @@
                  return;
              } else {
                  var eventNo=midiPlayback.stopPlay();
-                 var mididata=smfReader.getMidiSeqLists();
+                 var mididata=smfReader.getMidiSeqList();
                  mididata[0].eventNo=eventNo;
                  document.querySelector("#fileicon-"+selIdx).style.removeProperty("animation-name");
                  console.log("MIDI stopPlay", eventNo);         
@@ -239,17 +292,22 @@
          }
      }
      const playListItemMouseDown = (event) => {
+         event.preventDefault();
+         event.stopPropagation();
+         // [TODO] why "playListItemMouseDown" fires after this function?
          var target=checkIsParent(event);
          //var newSelectedIdx=event.target.id.split("-").pop();
          var newSelectedIdx=target.id.split("-").pop();
          if(midiPlayback.isPlaying()!==true) {
              if(appConst.listSelectedIdx!==null
                 && newSelectedIdx!=appConst.listSelectedIdx) {
-                 var e={target:{id:null}};
-                 document.querySelector("#parent-" + appConst.listSelectedIdx).style.removeProperty("background-color");
+//                 var e={target:{id:null}};
+                 var elem=document.querySelector("#parent-" + appConst.listSelectedIdx)
+                 if(elem!==null) elem.style.removeProperty("background-color");
              }
              target.style.setProperty("background-color", "#f5f5f5");
-             appConst.listSelectedIdx=newSelectedIdx;
+             //appConst.listSelectedIdx=newSelectedIdx;
+             appConst.setListSelectedIdx(newSelectedIdx);
          } else {
              if(newSelectedIdx!=appConst.listSelectedIdx) {
                  showSnackBar("Stop playback before select another song.");
@@ -263,6 +321,36 @@
          }
          return target;
      }
+
+     const controlIconMouseOver = (event) => {
+         event.target.style.setProperty("color", "#000000");
+     }
+     const controlIconMouseOut = (event) => {
+         event.target.style.removeProperty("color");
+     }
+     const controlIconMouseDown = (event) => {
+         var type = event.target.id.split("-").shift();
+         console.log(type);
+         var targetNum = event.target.id.split("-").pop();
+         document.querySelector("#parent-"+targetNum).remove();
+         if(appConst.listSelectedIdx==targetNum) {
+             if(midiPlayback.isPlaying()==true) {
+                 midiPlayback.stopPlay();
+             }
+             console.log("[B]", appConst.listSelectedIdx, targetNum);
+             appConst.setListSelectedIdxNull();
+             console.log("[A]",appConst.listSelectedIdx, targetNum);
+         }
+         var newListIdx=smfReader.removeItemfromList(targetNum);
+         if(newListIdx.length==0) {
+             if(document.querySelector("#divFileList").className.match("unvisible")===null) {
+                 document.querySelector("#divFileList").className =
+                     document.querySelector("#divFileList").className + (" unvisible");
+             }
+         }
+
+     }
+
      // (end) behavior of item is selected
 
      const showSnackBar = (msg) => {
