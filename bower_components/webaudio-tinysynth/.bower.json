@@ -1,0 +1,31 @@
+{
+  "name": "webaudio-tinysynth",
+  "homepage": "https://github.com/g200kg/webaudio-tinysynth",
+  "authors": [
+    "Tatsuya Shinyagaito <gaito@g200kg.com>"
+  ],
+  "description": "",
+  "main": "webaudio-tinysynth.html",
+  "license": "Apache 2.0",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "polymer": "polymer/polymer#^1.8.0",
+    "webaudio-controls": "g200kg/webaudio-controls"
+  },
+  "_release": "3944038481",
+  "_resolution": {
+    "type": "branch",
+    "branch": "master",
+    "commit": "39440384811d062c5c4de53193c0438020dfd8b5"
+  },
+  "_source": "https://github.com/g200kg/webaudio-tinysynth.git",
+  "_target": "*",
+  "_originalSource": "g200kg/webaudio-tinysynth",
+  "_direct": true
+}

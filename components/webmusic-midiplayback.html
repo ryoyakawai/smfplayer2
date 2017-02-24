@@ -35,19 +35,25 @@
                    ]
                }
            }, // end of properties: 
+/*
+           setTimestampSecUnit: function(secUnit) {
+               console.log("[before] ", this.midiPlayback);
+               this.midiPlayback.setTimestampSecUnit(secUnit);
+               console.log("[after2] ", this.midiPlayback);
+           },
+*/
            setMidiOut: function(output) {
                this.midiPlayback.setMidiOut(output);
            },
-           startPlay: function(midiseq, latency) {
+           startPlay: function(midiseq, latency, startTime, secUnit) {
                if(latency==null) latency=100;
                if(midiseq===null) {
                    return false;
                } else {
-                   this.midiPlayback.setStartTime();
                    this.midiPlayback.setChInfo(this.chInfo);
                    this.midiPlayback.changeFinished(false);
-                   this.midiPlayback.init(midiseq.data, latency, midiseq.eventNo);
-                   this.midiPlayback.startPlay();
+                   this.midiPlayback.init(midiseq.data, latency, midiseq.eventNo, secUnit);
+                   this.midiPlayback.startPlay(startTime);
                } 
            },
            stopPlay: function() {
@@ -58,7 +64,6 @@
                return this.midiPlayback.nowPlaying;
            },
            ready: function() {
-               
                // beginning of MidiPlayer
                var MidiPlayback = function() {
                    this.nsx1Mode=false;
@@ -66,9 +71,10 @@
                };
 
                MidiPlayback.prototype={
-                   init: function(midiFile, latency, eventNo) {
+                   init: function(midiFile, latency, eventNo, secUnit) {
                        this.midiFile=midiFile;
                        this.latency=latency;
+                       this.secUnit=this.setTimestampSecUnit(secUnit);
                        this.chInfo=[
                            {"on":true}, {"on":true}, {"on":true}, {"on":true},
                            {"on":true}, {"on":true}, {"on":true}, {"on":true},
@@ -96,8 +102,19 @@
                        this.eventNo=eventNo;
                        this.posMoving=false;
 
-                       
                        this.getFirstEvent();
+                   },
+                   setTimestampSecUnit: function(secUnit) {
+                       var unit=0;
+                       switch(secUnit) {
+                           case "millisec":
+                               unit=1;
+                               break
+                           case "sec":
+                               unit=0.001;
+                               break
+                       }
+                       return unit;
                    },
                    setMidiOut: function(output) {
                        this.mOut=output;
@@ -202,7 +219,7 @@
 	                 _handleEvent: function() {
                        // add absolite timestamp, and send msaage a little bit faster
                        var rightNow=window.performance.now();
-                       if((this.startTime+this.eventTime)<=rightNow) { // latency
+                       if((this.startTime+this.eventTime)<=rightNow+this.latency*this.secUnit) { // latency
                            if(this.finished==true)  {
                                this.allSoundOff();
                                return;
@@ -247,7 +264,7 @@
                                       console.log(this.eventTime, out.join(" "));
                                     */
 
-                                   if(sendFl===true) this._sendToDevice(event.raw, this.startTime+this.eventTime);
+                                   if(sendFl===true) this._sendToDevice(event.raw, this.startTime+this.eventTime*this.secUnit);
                                    break;
                            }
     		                   this._getNextEvent();
@@ -281,26 +298,25 @@
                                return;
                            }
                        }
-                       this.mOut.send(msg, time+this.latency);
-
+                       this.mOut.send(msg, time+this.latency*this.secUnit);
                    },
 
-	                 startPlay: function () {
+	                 startPlay: function (startTime) {
                        clearInterval(this.timerId);
                        if(this.startTime==0) {
-                           this.setStartTime();
+                           this.setStartTime(startTime);
                            this.setGM();
                        }
                        if(this.finished==false) {
                            var self=this;
                            this.nowPlaying=true;
-		                       this.timerId=setInterval( function() {
+		                       this.timerId=setInterval( () => {
                                self._handleEvent.bind(self)();
                                if(self.finished==true) {
                                    clearInterval(self.timerId);
                                    self.stopPlay.bind(self)();
                                }
-                           }, this.interval );
+                           }, this.interval);
                        }
 	                 },
                    
@@ -327,10 +343,12 @@
                        clearInterval(this.timerId);
                    },
 
-                   setStartTime: function () {
-                       this.startTime=window.performance.now();
+                   setStartTime: function (startTime) {
+                       if(typeof startTime!="number") {
+                           startTime=window.performance.now();
+                       }
+                       this.startTime=startTime;
                        this.eventTime=0;
-                       console.info("[setStartTime]", this.startTime);
                    },
 
                    allSoundOff: function () {
