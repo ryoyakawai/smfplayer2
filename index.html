@@ -2,6 +2,8 @@
 <html>
   <head>
     <meta charset="UTF-8">
+    <script src="./scripts/3rdparty/webaudio-tinysynth-ext.js"></script>
+
     <style>
      body {
        padding: 10px;
@@ -34,44 +36,14 @@
     <script type="module" src="./scripts/main.js"></script>
   </head>
   <body>
-    <button id="listMIDIDevices01">listMIDIDevices01</button><br>
-    <div>
-      <button id="reqDeviceId01">reqDeviceId01</button>
-    </div>
-    <div>
-      <input id="patchNumber01" type="number" min="0" max="99" step="1" value="1" style="width:50px; text-align:center">
-      <button id="reqPatch01">reqPatch01</button>
-    </div>
-    <br>
-    <div>
-      <input id="patchName01" type="text" value="" style="width:250px; text-align:left; padding:2px;"><button id="sendPatch01">Send Patch (sendPatch01)</button>
-    </div>
-    <div>
-      <button id="restorePatch00">Restore Patch (00)</button>
-      <button id="restorePatch01">Restore Patch (01)</button>
-      <button id="restorePatch02">Restore Patch (02)</button>
-      <button id="restorePatch03">Restore Patch (03)</button>
-    </div>
-    <!--
-    <div>
-      <webaudio-knob id="knob-1" src="./images/webautio-ctrls/knobs/LittlePhatty.png" diameter="64" min="0" max="100"></webaudio-knob>
-      <webaudio-knob id="knob-2" src="./images/webautio-ctrls/knobs/JP8000.png" diameter="64" min="0" max="100"></webaudio-knob>
-      <webaudio-knob id="knob-3" src="./images/webautio-ctrls/knobs/knob_64_white1.png" diameter="64" min="0" max="100"></webaudio-knob>
-      <webaudio-knob id="knob-4" src="./images/webautio-ctrls/knobs/Knob_18.png" diameter="64" min="0" max="100"></webaudio-knob>
-      <webaudio-knob id="knob-5" src="./images/webautio-ctrls/knobs/ANGEL_Sewage_62x62knob.png" diameter="64" min="0" max="100"></webaudio-knob>
-      <webaudio-knob id="knob-6" src="./images/webautio-ctrls/knobs/simplegray.png" diameter="64" min="0" max="100"></webaudio-knob>
 
-      <webaudio-slider id="slider10" direction="vert" colors="#fff;#444;#fff"></webaudio-slider>
+    <webaudio-tinysynth id="tinysynth"></webaudio-tinysynth>
 
-      <webaudio-switch id="sw1" colors="#0f0;#fff;#fff"></webaudio-switch>
-    </div>
-    -->
-
-    <hr style="margin: 25px 0;">
     <h2>SMF</h2>
     <div style="border: 1px solid #ddd; border-radius: 5px; padding: 10px;">
+      <div style="display: flex"><input type="checkbox" id="useExternalSynth" /> Use External Synth</div>
       <div>
-        <span class="display_none">Input: <select id="midiInput"></select></span>
+        <button id="listMIDIDevices01">listMIDIDevices01</button><br>
         <span>Output: <select id="midiOutput"></select></span><br>
       </div>
       <div id="loadSmfArea" class="load_smf">
@@ -104,30 +76,7 @@
       <button id="smfPanic">Panic</button>
     </div>
 
-    <hr style="margin: 25px 0;">
 
-    <h2>BLE</h2>
-    <div>
-      <button id="start_ble">start ble (start_ble)</button>
-      <button id="stop_ble">stop ble (stop_ble)</button><br>
-      <button id="send_ble">send device id request msg (send_ble)</button><br>
-      <button id="reqPatch02Ble">reqPatch02Ble (reqPatch02Ble)</button>
-      <button id="check_decode_endode_patch_ble">check encode/decode patch<br> (check_decode_endode_patch_ble)</button>
-    </div>
-
-    <div style="display: flex; align-items: center; flex-direction: row; margin: 20px 10px;">
-      <div>
-        <div style="margin-right: 10px;display: flex; flex-direction: row;">
-          <div style="margin-right: 20px;"><input type="checkbox" id="send_to_ble">BLE</div>
-          <div><input type="checkbox" id="ble_debug" checked>DEBUG</div>
-        </div>
-        <webaudio-keyboard id="keyboard-01" width="640" height="80" keys="61" min="27"></webaudio-keyboard>
-      </div>
-      <div style="display: flex; justify-content:center; align-items: center; flex-direction: column; margin-left: 20px;">
-        <div><webaudio-knob src="./images/webautio-ctrls/knobs/LittlePhatty.png" width="36" id="knob-01" height="36" min="0" max="127" defvalue=64 :value="audition_param_b0_02" conv="Math.round(100 * x / 127)" tooltip="Breath Ctrl<br/>%d %" value="64"></webaudio-knob></div>
-        <div class="knob-title-text-00 label-title-00">Breath Ctrl</div>
-      </div>
-    </div>
     <div id="message-area"></div>
     <script src="./scripts/3rdparty/webaudio-controls.js"></script>
   </body>

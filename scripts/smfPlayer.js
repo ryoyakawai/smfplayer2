@@ -341,13 +341,16 @@ export class SmfPlayer {
         return
       }
     }
+    console.log(msg)
     if (this.debugMode) console.log_midi(msg, 'midi', ' [smfPlayer.js] ', true)
-
     if (this.timeManagementMode=='absolute') {
       if (this.promiseSendMode) {
-        await this.mOut.send(this.arr_msgs, this.startTime + this.eventTime + this.latency)
+        await this.mOut.send(msg, this.startTime + this.eventTime + this.latency)
+        //await this.mOut.send(this.arr_msgs, this.startTime + this.eventTime + this.latency)
       } else {
-        this.mOut.send(msg, this.startTime + this.eventTime + this.latency)
+        //this.mOut.send(msg, this.startTime + this.eventTime + this.latency)
+        this.mOut.send(msg)
+        console.log(msg)
       }
     } else
     if (this.timeManagementMode=='relative') {
