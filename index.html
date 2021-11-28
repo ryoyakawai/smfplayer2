@@ -1,97 +1,134 @@
+<!DOCTYPE html>
 <html>
   <head>
+    <meta charset="UTF-8">
     <style>
      body {
-       font-family: arial;
-       margin:20px;
+       padding: 10px;
      }
-     #fileList {
-       width:230px;
-       border:1px solid #dddddd;
-       border-radius:3px;
-       padding:3px
+     body, button {
+       font-family: monospace;
+     }
+     button, select {
+       margin: 4px;
+     }
+     select {
+       padding: 4px 10px;
+     }
+     div.load_smf {
+       padding: 4px;
+       width: 400px;
+       border: 1px solid #aaa;
+       border-radius: 4px;
+     }
+     div.load_smf.file_hover {
+       background-color: #aaa
+     }
+     input.loadsmffile {
+       width: 100%;
+     }
+     .display_none {
+       display: none
      }
     </style>
- </head>
+    <script type="module" src="./scripts/main.js"></script>
+  </head>
   <body>
-    <script src="bower_components/webcomponentsjs/webcomponents-lite.min.js"></script>
-    <link rel="import" href="bower_components/polymer/polymer.html">
-    <link rel="import" href="bower_components/x-webmidi/x-webmidirequestaccess.html">
-    <link rel="import" href="components/webmusic-smfreader.html">
-    <link rel="import" href="components/webmusic-midiplayback.html">
+    <button id="listMIDIDevices01">listMIDIDevices01</button><br>
+    <div>
+      <button id="reqDeviceId01">reqDeviceId01</button>
+    </div>
+    <div>
+      <input id="patchNumber01" type="number" min="0" max="99" step="1" value="1" style="width:50px; text-align:center">
+      <button id="reqPatch01">reqPatch01</button>
+    </div>
+    <br>
+    <div>
+      <input id="patchName01" type="text" value="" style="width:250px; text-align:left; padding:2px;"><button id="sendPatch01">Send Patch (sendPatch01)</button>
+    </div>
+    <div>
+      <button id="restorePatch00">Restore Patch (00)</button>
+      <button id="restorePatch01">Restore Patch (01)</button>
+      <button id="restorePatch02">Restore Patch (02)</button>
+      <button id="restorePatch03">Restore Patch (03)</button>
+    </div>
+    <!--
+    <div>
+      <webaudio-knob id="knob-1" src="./images/webautio-ctrls/knobs/LittlePhatty.png" diameter="64" min="0" max="100"></webaudio-knob>
+      <webaudio-knob id="knob-2" src="./images/webautio-ctrls/knobs/JP8000.png" diameter="64" min="0" max="100"></webaudio-knob>
+      <webaudio-knob id="knob-3" src="./images/webautio-ctrls/knobs/knob_64_white1.png" diameter="64" min="0" max="100"></webaudio-knob>
+      <webaudio-knob id="knob-4" src="./images/webautio-ctrls/knobs/Knob_18.png" diameter="64" min="0" max="100"></webaudio-knob>
+      <webaudio-knob id="knob-5" src="./images/webautio-ctrls/knobs/ANGEL_Sewage_62x62knob.png" diameter="64" min="0" max="100"></webaudio-knob>
+      <webaudio-knob id="knob-6" src="./images/webautio-ctrls/knobs/simplegray.png" diameter="64" min="0" max="100"></webaudio-knob>
 
-    <x-webmidirequestaccess sysex output></x-webmidirequestaccess>
-    <webmusic-smfreader id="smfreader"></webmusic-smfreader>
-    <webmusic-midiplayback id="midiplayback"></webmusic-midiplayback>
+      <webaudio-slider id="slider10" direction="vert" colors="#fff;#444;#fff"></webaudio-slider>
 
-    MIDI Output: <x-webmidioutput id="midioutput" autoreselect></x-webmidioutput>
-    <br><br>
+      <webaudio-switch id="sw1" colors="#0f0;#fff;#fff"></webaudio-switch>
+    </div>
+    -->
 
-    <select id="fileList" size="4">
-      <option value="" disabled selected>Drop MIDI File Here</option>
-    </select>
-    <br><br>
+    <hr style="margin: 25px 0;">
+    <h2>SMF</h2>
+    <div style="border: 1px solid #ddd; border-radius: 5px; padding: 10px;">
+      <div>
+        <span class="display_none">Input: <select id="midiInput"></select></span>
+        <span>Output: <select id="midiOutput"></select></span><br>
+      </div>
+      <div id="loadSmfArea" class="load_smf">
+        <input type="file" accept="audio/midi" id="loadsmffile" class="loadsmffile">
+      </div>
+      <div>
+        [CH]<br>
+        <div style="padding-left: 10px">
+          1: <input type="checkbox" id="ch0" checked>,
+          2: <input type="checkbox" id="ch1" checked>,
+          3: <input type="checkbox" id="ch2" checked>,
+          4: <input type="checkbox" id="ch3" checked>,
+          5: <input type="checkbox" id="ch4" checked>,
+          6: <input type="checkbox" id="ch5" checked>,
+          7: <input type="checkbox" id="ch6" checked>,
+          8: <input type="checkbox" id="ch7" checked><br>
+          9: <input type="checkbox" id="ch8" checked>,
+          10: <input type="checkbox" id="ch9" checked>,
+          11: <input type="checkbox" id="ch10" checked>,
+          12: <input type="checkbox" id="ch11" checked>,
+          13: <input type="checkbox" id="ch12" checked>,
+          14: <input type="checkbox" id="ch13" checked>,
+          15: <input type="checkbox" id="ch14" checked>,
+          16: <input type="checkbox" id="ch15" checked>
+        </div>
+      </div>
+      <button id="smfPlay">▶</button><button id="smfPause">┃┃</button><button id="smfStop">■</button><button id="smfMVFadeout">\■</button><br />
+      <button id="smfRewind"><<</button><button id="smfForward">>></button><br />
+      Volume: <input id="smfMasterVolume" type="range" min="0" max="127" value="127" step="1" style="width:300px; cursor:pointer;"/><br />
+      <button id="smfPanic">Panic</button>
+    </div>
 
+    <hr style="margin: 25px 0;">
 
-    <button id="play">Play</button>
-    <button id="stop">Stop</button>
+    <h2>BLE</h2>
+    <div>
+      <button id="start_ble">start ble (start_ble)</button>
+      <button id="stop_ble">stop ble (stop_ble)</button><br>
+      <button id="send_ble">send device id request msg (send_ble)</button><br>
+      <button id="reqPatch02Ble">reqPatch02Ble (reqPatch02Ble)</button>
+      <button id="check_decode_endode_patch_ble">check encode/decode patch<br> (check_decode_endode_patch_ble)</button>
+    </div>
 
-    <script type="text/javascript">
-     const midi=document.querySelector("#midioutput");
-     const smfReader=document.querySelector("#smfreader");
-     const midiPlayback=document.querySelector("#midiplayback");
-
-     // set console.info not to print
-     console.info=function(){};
-
-     var droparea=document.querySelector("#fileList");
-     droparea.ondragover = smfReader.onDragover;
-     droparea.ondragend = droparea.ondragleave = smfReader.dropareaRelease;
-     droparea.ondrop = (event) => {
-         event.preventDefault();
-         smfReader.dropareaRelease(event);
-         smfReader.fileOnDrop(event);
-     }
-     smfReader.addEventListener("raiseError", (event) => {
-         console.log("[raiseError]", event.detail);
-     });
-     smfReader.addEventListener("raiseEvent", (event) => {
-         var msg=event.detail;
-         switch(msg.type) {
-             case "seqAdded":
-                 var option = document.createElement("option");
-                 option.value=msg.detail.idx;
-                 option.text=msg.detail.data[msg.detail.idx].name;
-                 option.selected=true;
-                 document.querySelector("#fileList").appendChild(option);
-                 break;
-         }
-         //console.log("[raiseEvent]", msg, option, msg.detail.data[msg.detail.idx].name);
-     });
-
-     document.querySelector("#play").addEventListener("mousedown", (evet) => {
-         if(midiPlayback.isPlaying()!==true) {
-             var selIdx=document.querySelector("#fileList").value;
-             if(selIdx<0) {
-                 console.error("Select one from the list.");
-                 return;
-             }
-             var mididata=smfReader.getMidiSeqLists();
-             midiPlayback.setMidiOut(midi.getOutputDevice());
-             midiPlayback.startPlay(mididata[selIdx], 200);
-             console.log("MIDI startPlay");
-         }
-     });
-     document.querySelector("#stop").addEventListener("mousedown", (event) => {
-         if(midiPlayback.isPlaying()!==false) {
-             var eventNo=midiPlayback.stopPlay();
-             var mididata=smfReader.getMidiSeqLists();
-             mididata[0].eventNo=eventNo;
-             console.log("MIDI stopPlay", eventNo);         
-         }
-     });
-
-    </script>
-
+    <div style="display: flex; align-items: center; flex-direction: row; margin: 20px 10px;">
+      <div>
+        <div style="margin-right: 10px;display: flex; flex-direction: row;">
+          <div style="margin-right: 20px;"><input type="checkbox" id="send_to_ble">BLE</div>
+          <div><input type="checkbox" id="ble_debug" checked>DEBUG</div>
+        </div>
+        <webaudio-keyboard id="keyboard-01" width="640" height="80" keys="61" min="27"></webaudio-keyboard>
+      </div>
+      <div style="display: flex; justify-content:center; align-items: center; flex-direction: column; margin-left: 20px;">
+        <div><webaudio-knob src="./images/webautio-ctrls/knobs/LittlePhatty.png" width="36" id="knob-01" height="36" min="0" max="127" defvalue=64 :value="audition_param_b0_02" conv="Math.round(100 * x / 127)" tooltip="Breath Ctrl<br/>%d %" value="64"></webaudio-knob></div>
+        <div class="knob-title-text-00 label-title-00">Breath Ctrl</div>
+      </div>
+    </div>
+    <div id="message-area"></div>
+    <script src="./scripts/3rdparty/webaudio-controls.js"></script>
   </body>
 </html>

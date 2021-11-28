@@ -1,6 +1,14 @@
-# smfplayer2
-## Status of the repository
-under development
+# SMF Player 2
 
-## Goal of the repository
-To capsulize SMF(Standard MIDI File) reader and playback JavaScript code into Polymer component. 
+## Run
+### with Python 2.7
+
+```bash
+$ python -m SimpleHTTPServer 8000
+```
+
+### with Python 3 or higher
+
+```bash
+$ python -m http.server 8000
+```
